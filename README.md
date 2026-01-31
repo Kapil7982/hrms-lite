@@ -72,8 +72,8 @@ cd hrms-lite
 
 Ensure MySQL is running and accessible with:
 - Host: localhost
-- User: root
-- Password: root
+- User: your_db_username
+- Password: your_db_password
 
 The application will automatically create the database and tables on first run.
 
@@ -178,6 +178,3 @@ VITE_API_URL=http://localhost:5000/api
 - Date: Required, valid date format
 - Status: Required, must be "Present" or "Absent"
 
-## License
-
-MIT
