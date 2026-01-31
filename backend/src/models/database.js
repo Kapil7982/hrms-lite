@@ -4,32 +4,44 @@ let pool;
 
 const getPool = () => {
   if (!pool) {
-    pool = mysql.createPool({
+    const config = {
       host: process.env.DB_HOST || 'localhost',
+      port: process.env.DB_PORT || 3306,
       user: process.env.DB_USER || 'root',
       password: process.env.DB_PASSWORD || 'root',
       database: process.env.DB_NAME || 'hrms_lite',
       waitForConnections: true,
       connectionLimit: 10,
       queueLimit: 0
-    });
+    };
+
+    // Enable SSL for cloud databases (Aiven, PlanetScale, etc.)
+    if (process.env.DB_HOST && process.env.DB_HOST !== 'localhost') {
+      config.ssl = { rejectUnauthorized: false };
+    }
+
+    pool = mysql.createPool(config);
   }
   return pool;
 };
 
 const initializeDatabase = async () => {
-  // First, create connection without database to create the database
-  const connection = await mysql.createConnection({
-    host: process.env.DB_HOST || 'localhost',
-    user: process.env.DB_USER || 'root',
-    password: process.env.DB_PASSWORD || 'root'
-  });
+  const isCloud = process.env.DB_HOST && process.env.DB_HOST !== 'localhost';
 
-  // Create database if not exists
-  await connection.execute(`CREATE DATABASE IF NOT EXISTS ${process.env.DB_NAME || 'hrms_lite'}`);
-  await connection.end();
+  // For local development, create database if not exists
+  if (!isCloud) {
+    const connection = await mysql.createConnection({
+      host: process.env.DB_HOST || 'localhost',
+      port: process.env.DB_PORT || 3306,
+      user: process.env.DB_USER || 'root',
+      password: process.env.DB_PASSWORD || 'root'
+    });
 
-  // Now use the pool with the database
+    await connection.execute(`CREATE DATABASE IF NOT EXISTS ${process.env.DB_NAME || 'hrms_lite'}`);
+    await connection.end();
+  }
+
+  // Use the pool with the database
   const pool = getPool();
 
   // Create employees table
